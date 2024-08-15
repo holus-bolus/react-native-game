@@ -1,25 +1,54 @@
-import React from 'react'
-import { Provider } from 'react-redux'
-import { NavigationContainer } from '@react-navigation/native'
-import { createNativeStackNavigator } from '@react-navigation/native-stack'
-import store from './store'
-import GameScreen from './screens/GameScreen'
-import ScoreboardScreen from "./screens/ScoreBoardScreen";
-// import ScoreboardScreen from './screens/ScoreboardScreen'
+import React, { useState } from 'react'
+import { View, Button, TextInput, StyleSheet } from 'react-native'
+import GameScreen from "./screens/GameScreen";
 
-const Stack = createNativeStackNavigator()
 
 const App = () => {
+    const [playerName, setPlayerName] = useState('')
+    const [difficulty, setDifficulty] = useState(0)
+    const [gameStarted, setGameStarted] = useState(false)
+    
+    const startGame = () => {
+        setGameStarted(true)
+    }
+    
     return (
-      <Provider store={store}>
-          <NavigationContainer>
-              <Stack.Navigator initialRouteName="Game">
-                  <Stack.Screen name="Game" options={{headerShown:false}} component={GameScreen} />
-                    <Stack.Screen name="Scoreboard" component={ScoreboardScreen} />
-              </Stack.Navigator>
-          </NavigationContainer>
-      </Provider>
+      <View style={styles.container}>
+          {!gameStarted ? (
+            <>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your name"
+                  value={playerName}
+                  onChangeText={setPlayerName}
+                />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter difficulty (0-10)"
+                  keyboardType="numeric"
+                  value={String(difficulty)}
+                  onChangeText={(text) => setDifficulty(Number(text))}
+                />
+                <Button title="Start Game" onPress={startGame} />
+            </>
+          ) : (
+            <GameScreen playerName={playerName} difficulty={difficulty} />
+          )}
+      </View>
     )
 }
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        padding: 16,
+    },
+    input: {
+        borderWidth: 1,
+        padding: 8,
+        marginBottom: 12,
+    },
+})
 
 export default App
