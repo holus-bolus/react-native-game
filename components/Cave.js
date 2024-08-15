@@ -2,20 +2,21 @@ import React from 'react'
 import { Svg, Path } from 'react-native-svg'
 import { View } from 'react-native'
 
-const Cave = () => {
-	const caveData = ['-100 100', '-120 120', '-140 140', '-160 160']
-	const segmentHeight = 10
-	const canvasWidth = 500
+const Cave = ({ caveData }) => {
+	const segmentHeight = 100
 	
 	const generateCavePath = () => {
-		let path = ''
+		if (caveData.length === 0) {
+			return ''
+		}
 		
+		let path = ''
 		caveData.forEach((segment, index) => {
 			const [left, right] = segment.split(' ').map(Number)
 			const yPosition = index * segmentHeight
 			
-			const leftX = (canvasWidth / 2) + left
-			const rightX = (canvasWidth / 2) + right
+			const leftX = 250 + left
+			const rightX = 250 + right
 			
 			if (index === 0) {
 				path += `M ${leftX},${yPosition} L ${rightX},${yPosition} `
@@ -23,14 +24,13 @@ const Cave = () => {
 				path += `L ${leftX},${yPosition} L ${rightX},${yPosition} `
 			}
 		})
-		
-		console.log('Generated Cave Path:', path)
 		return path
 	}
 	
+	
 	return (
 	  <View style={{ flex: 1 }}>
-		  <Svg height="100%" width="100%">
+		  <Svg height="100%" width="100%" viewBox="0 0 500 1000">
 			  <Path
 				d={generateCavePath()}
 				fill="none"
@@ -40,6 +40,7 @@ const Cave = () => {
 		  </Svg>
 	  </View>
 	)
+
 }
 
 export default Cave

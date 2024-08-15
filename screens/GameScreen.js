@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import {View, Text, StyleSheet, TouchableOpacity, Animated, Button} from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Button } from 'react-native'
 import Cave from '../components/Cave'
 import Drone from '../components/Drone'
 import AsyncStorage from '@react-native-community/async-storage'
@@ -11,6 +11,8 @@ const GameScreen = ({ playerName, difficulty }) => {
 	const [score, setScore] = useState(0)
 	const ws = useRef(null)
 	
+	const MAX_SEGMENTS = 50
+	
 	useEffect(() => {
 		initGameSession()
 		return () => {
@@ -20,7 +22,6 @@ const GameScreen = ({ playerName, difficulty }) => {
 	
 	const initGameSession = async () => {
 		try {
-			console.log('Initializing game session...')
 			const response = await fetch('https://cave-drone-server.shtoa.xyz/init', {
 				method: 'POST',
 				headers: {
@@ -34,8 +35,6 @@ const GameScreen = ({ playerName, difficulty }) => {
 			}
 			
 			const { id } = await response.json()
-			console.log('Received player ID:', id)
-			
 			const tokenChunks = await Promise.all(
 			  [1, 2, 3, 4].map((chunkNo) =>
 				fetch(`https://cave-drone-server.shtoa.xyz/token/${chunkNo}?id=${id}`).then(
@@ -45,44 +44,35 @@ const GameScreen = ({ playerName, difficulty }) => {
 			)
 			
 			const token = tokenChunks.map((chunk) => chunk.chunk).join('')
-			console.log('Received token:', token)
-			
 			ws.current = new WebSocket(`wss://cave-drone-server.shtoa.xyz/cave`)
 			
 			ws.current.onopen = () => {
-				console.log('WebSocket connection opened')
 				const authMessage = `player:${id}-${token}`
 				ws.current.send(authMessage)
-				console.log('Sent auth message:', authMessage)
 			}
 			
 			ws.current.onmessage = (e) => {
-				console.log('Raw WebSocket data:', e.data)
 				
 				if (e.data === 'finished') {
-					console.log('Cave data transmission finished.')
 					ws.current.close()
 					return
 				}
+				
 				const validFormat = /^-?\d+,-?\d+$/
 				if (validFormat.test(e.data)) {
 					const [left, right] = e.data.split(',').map(Number)
-					const MAX_SEGMENTS = 50;
 					
 					setCaveData((prev) => {
 						const updatedData = [...prev, `${left} ${right}`]
 						if (updatedData.length > MAX_SEGMENTS) {
-							updatedData.shift();  // Remove the oldest segment
+							updatedData.splice(0, updatedData.length - MAX_SEGMENTS)
 						}
-						console.log('Updated Cave Data:', updatedData)
 						return updatedData
-					});
+					})
 				} else {
 					console.log('Received unexpected data:', e.data)
 				}
 			}
-			
-			
 			
 			ws.current.onerror = (error) => {
 				console.error('WebSocket error:', error)
@@ -95,9 +85,6 @@ const GameScreen = ({ playerName, difficulty }) => {
 			console.error('Failed to initialize game session:', error)
 		}
 	}
-
-
-
 	
 	const handleCollision = () => {
 		console.log('Collision detected')
@@ -116,7 +103,7 @@ const GameScreen = ({ playerName, difficulty }) => {
 			console.error('Failed to save game session:', error)
 		}
 	}
-
+	
 	const startMoving = (direction) => {
 		let toValue
 		switch (direction) {
@@ -138,8 +125,7 @@ const GameScreen = ({ playerName, difficulty }) => {
 			toValue,
 			duration: 1000,
 			useNativeDriver: false,
-		}).start(() => {
-		})
+		}).start(() => {})
 	}
 	
 	const stopMoving = () => {
@@ -199,6 +185,7 @@ const GameScreen = ({ playerName, difficulty }) => {
 		  </View>
 	  </View>
 	)
+
 }
 
 const styles = StyleSheet.create({
